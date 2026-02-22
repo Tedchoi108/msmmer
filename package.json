@@ -4,6 +4,6 @@
     "scripts": {
         "start": "npm run start --prefix server",
         "build": "npm install --prefix server && npm run build --prefix server && npm run prisma:generate --prefix server",
-        "build:client": "npm install --prefix client && npm run build --prefix client"
+        "build:client": "npm install --prefix client && npm run build --prefix client && rm -rf ./dist && cp -r client/dist ./dist"
     }
 }
