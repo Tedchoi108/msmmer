@@ -1,0 +1,164 @@
+ // This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  FACTORY
+  ADMIN
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  password          String?  // Optional for social login users
+  name              String
+  companyName       String?
+  role              UserRole @default(CLIENT)
+  businessNumber    String?  @unique
+  phoneNumber       String?
+  businessRegistrationUrl String? // URL for the uploaded business document
+  
+  // Factory specific fields
+  categories        String[] // Manufacturing types like "Laser", "CNC", "3D Printing"
+  isVerified        Boolean  @default(false) // Admin approval for Factory
+  
+  // Social Login Fields
+  provider          String?  // e.g., "GOOGLE", "KAKAO"
+  providerId        String?  @unique
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  projects          Project[] // Only for CLIENT
+  bids              Bid[]     // Only for FACTORY
+  categoryRequests  CategoryRequest[]
+}
+
+enum ProjectStatus {
+  ANALYZING  // AI performing DFM
+  BIDDING    // Open for factory bids
+  CONTRACTED // Bid selected, preparing order
+  COMPLETED
+  CANCELLED
+}
+
+model Project {
+  id              String        @id @default(uuid())
+  title           String
+  description     String?
+  clientId        String
+  client          User          @relation(fields: [clientId], references: [id])
+  
+  // File & AI Data
+  fileUrl         String        // CAD (STEP/STP) or 2D Drawing
+  fileName        String
+  aiDfmResult     Json?         // AI analysis (DFM issues, complexity)
+  aiEstimatedCost Float?        // AI's initial price estimate
+  
+  status          ProjectStatus @default(ANALYZING)
+  deadline        DateTime?     // Bidding deadline
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  bids            Bid[]
+  order           Order?
+}
+
+enum BidStatus {
+  PENDING
+  RE_QUOTED
+  SELECTED
+  REJECTED
+}
+
+model Bid {
+  id              String    @id @default(uuid())
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id])
+  factoryId       String
+  factory         User      @relation(fields: [factoryId], references: [id])
+  
+  price           Float
+  deliveryDays    Int
+  notes           String?
+  attempts        Int       @default(1) // Max 3 per factory
+  status          BidStatus @default(PENDING)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  order           Order?
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum ManufacturingStatus {
+  PREPARING
+  PRODUCING
+  INSPECTING
+  SHIPPING
+  DELIVERED
+}
+
+model Order {
+  id                  String              @id @default(uuid())
+  projectId           String              @unique
+  project             Project             @relation(fields: [projectId], references: [id])
+  bidId               String              @unique
+  bid                 Bid                 @relation(fields: [bidId], references: [id])
+  
+  finalPrice          Float
+  paymentStatus       PaymentStatus       @default(PENDING)
+  manufacturingStatus ManufacturingStatus @default(PREPARING)
+  trackingNumber      String?
+  inspectionImages    String[]            // URLs of inspection photos
+  
+  taxInvoiceUrl       String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model CostCalculationTemplate {
+  id              String   @id @default(uuid())
+  factoryId       String
+  name            String   // e.g., "Steel CNC Standard"
+  materialCost    Float    // Price per kg or mm3
+  cuttingRate     Float    // Price per meter/minute
+  bendingRate     Float    // Price per bend
+  laborRate       Float    // Price per hour
+  createdAt       DateTime @default(now())
+}
+
+model CategoryRequest {
+  id                String         @id @default(uuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+  requestedCategories String[]
+  reason            String?
+  status            RequestStatus  @default(PENDING)
+  adminNote         String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
