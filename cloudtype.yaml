@@ -14,9 +14,9 @@ services:
 
   - name: msmmer-client
     language: static
-    context: client
+    context: client # 이 설정이 폴더의 기준점을 client 폴더로 바꿉니다.
     build: npm install && npm run build
-    dir: dist
+    dir: dist # client 폴더 기준으로 그 안의 dist 폴더를 서비스합니다.
     env:
       - name: VITE_API_URL
-        value: https://msmmer-api.cloudtype.app # 실제 배포 후 생성된 백엔드 주소로 대시보드에서 수정 필요
+        value: https://msmmer-api.cloudtype.app # 실제 주소로 대시보드에서 덮어쓰기됩니다.
