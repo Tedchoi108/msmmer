@@ -1,0 +1,23 @@
+services:
+  - name: msmmer-api
+    language: nodejs
+    version: "22"
+    context: server
+    build: npm install && npm run build && npx prisma generate
+    start: npm start
+    port: 4000
+    env:
+      - name: PORT
+        value: "4000"
+      - name: NODE_ENV
+        value: production
+      # DATABASE_URL과 JWT_SECRET은 클라우드타입 대시보드에서 직접 입력하시는 것을 권장합니다.
+
+  - name: msmmer-client
+    language: static
+    context: client
+    build: npm install && npm run build
+    dir: dist
+    env:
+      - name: VITE_API_URL
+        value: https://msmmer-api.cloudtype.app # 실제 배포 후 생성된 백엔드 주소로 대시보드에서 수정 필요
