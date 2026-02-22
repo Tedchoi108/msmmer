@@ -2,9 +2,8 @@ services:
   - name: msmmer-api
     language: nodejs
     version: "22"
-    context: server
-    build: npm install && npm run build && npx prisma generate
-    start: npm start
+    build: npm install --prefix server && npm run build --prefix server && npx prisma generate --schema server/prisma/schema.prisma
+    start: npm start --prefix server
     port: 4000
     env:
       - name: PORT
