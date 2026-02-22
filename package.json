@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "scripts": {
         "start": "npm run start --prefix server",
-        "build": "npm run build --prefix server && npm run prisma:generate --prefix server",
-        "install-server": "npm install --prefix server"
+        "build": "npm install --prefix server && npm run build --prefix server && npm run prisma:generate --prefix server"
     }
 }
